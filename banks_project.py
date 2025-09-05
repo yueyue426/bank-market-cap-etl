@@ -91,4 +91,52 @@ def run_query(query_statement, sql_connection):
     query_output = pd.read_sql(query_statement, sql_connection)
     print(query_output)
 
+# ===========================================================================
+# Define relevant attributes and processes
+url = 'https://web.archive.org/web/20230908091635 /https://en.wikipedia.org/wiki/List_of_largest_banks'
+csv_path = 'source/exchange_rate.csv'
+table_attribs = ["Name", "MC_USD_Billion"]
+db_name = 'Banks.db'
+table_name = 'Largest_banks'
+output_path = './Largest_banks_data.csv'
+
+log_progress("Preliminaries complete. Initiating ETL process")
+
+df = extract(url, table_attribs)
+
+log_progress("Data extraction complete. Initiating Transform process")
+
+df = transform(df, csv_path)
+
+log_progress("Data transformation complete. Initiating Loading process")
+
+load_to_csv(df, output_path)
+
+log_progress("Data saved to CSV file")
+
+sql_connection = sqlite3.connect(db_name)
+
+log_progress("SQL connection initiated")
+
+load_to_db(df, sql_connection, table_name)
+
+log_progress("Data loaded to Database as table. Running the queries")
+
+log_progress("Running the first query:")
+
+query_statement = f"SELECT * FROM Largest_banks"
+run_query(query_statement, sql_connection)
+
+log_progress("Running the second query:")
+
+query_statement = f"SELECT AVG(MC_GBP_Billion) FROM Largest_banks"
+run_query(query_statement, sql_connection)
+
+log_progress("Running the third query:")
+query_statement = f"SELECT Name FROM Largest_banks LIMIT 5"
+run_query(query_statement, sql_connection)
+
+log_progress("Process Complete.")
+
+sql_connection.close()
 
