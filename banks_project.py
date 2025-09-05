@@ -1,7 +1,5 @@
 # Code for ETL operations on Country-GDP data
 # Import necessary libraries
-from operator import index
-
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -51,31 +49,42 @@ def extract(url, table_attribs):
     return df
 
 def transform(df, csv_path):
-    '''
+    """
     This function accesses the CSV file for exchange rate information,
     and adds three columns to the data frame, each containing the
     transformed version of Market Cap column to respective currencies.
-    '''
+    """
+    exchange_rate_df = pd.read_csv(csv_path)
+
+    # Convert exchange rate file to a dictionary
+    exchange_rate = exchange_rate_df.set_index('Currency').to_dict()['Rate']
+
+    df['MC_GBP_Billion'] = [np.round(x * exchange_rate ['GBP'], 2) for x in df['MC_USD_Billion']]
+    df['MC_EUR_Billion'] = [np.round(x * exchange_rate['EUR'], 2) for x in df['MC_USD_Billion']]
+    df['MC_INR_Billion'] = [np.round(x * exchange_rate['INR'], 2) for x in df['MC_USD_Billion']]
 
     return df
 
 def load_to_csv(df, output_path):
-    '''
+    """
     This function saves the final data frame as a CSV file in the
     provided path.
     Function returns nothing.
-    '''
+    """
+    df.to_csv(output_path)
 
 def load_to_db(df, sql_connection, table_name):
-    '''
+    """
     This function saves the final data frame to a database table
     with the provided name.
     Function returns nothing.
-    '''
+    """
+    df.to_sql(table_name, sql_connection, if_exists='replace', index=False)
 
 def run_query(query_statement, sql_connection):
-    '''
+    """
     This function runs the query on the database table and prints
     the output on the terminal.
     Function returns nothing.
-    '''
+    """
+
